@@ -1,0 +1,12 @@
+# ignore directories
+__pycache__/
+env/
+venv/
+.idea/
+/htmlcov/
+
+# ignore files
+.env
+*.pyc
+.coverage
+*.sqlite3

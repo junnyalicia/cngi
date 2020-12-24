@@ -1,0 +1,100 @@
+version: "3.7"
+services:
+  nginx:
+    image: nginx:alpine
+    networks:
+      ask-service:
+        ipv4_address: 192.168.34.2
+    volumes:
+      - ./data/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./askui/build:/wwwroot/askui:ro
+      - ./adminui/build:/wwwroot/adminui:ro
+    ports:
+      - 80:80
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "50"
+  database:
+    image: mysql:latest
+    networks:
+      ask-service:
+        ipv4_address: 192.168.34.3
+    volumes:
+      - ./data/db:/var/lib/mysql
+    ports:
+      - 3306:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=toor
+      - MYSQL_DATABASE=qa
+      - MYSQL_USER=qa
+      - MYSQL_PASSWORD=qaApiDb2020
+    logging:
+      driver: json-file
+      options:
+        max-size: "1m"
+        max-file: "3"
+  es:
+    image: elasticsearch:7.7.0
+    networks:
+      ask-service:
+        ipv4_address: 192.168.34.4
+    volumes:
+      - ./data/elasticsearch:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+      - 9300:9300
+    environment:
+      - "discovery.type=single-node"
+      - "xpack.ml.enabled=false"
+      - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
+    logging:
+      driver: json-file
+      options:
+        max-size: "1m"
+        max-file: "3"
+  bert:
+    image: private.docker.registry/bert-service:202012
+    networks:
+      ask-service:
+        ipv4_address: 192.168.34.5
+    environment:
+      - "NUM_WORKER=1"
+    logging:
+      driver: json-file
+      options:
+        max-size: "1m"
+        max-file: "3"
+  api:
+    image: private.docker.registry/api:202006
+    volumes:
+      - ./backend:/app:ro
+    networks:
+      ask-service:
+        ipv4_address: 192.168.34.6
+    logging:
+      driver: json-file
+      options:
+        max-size: "1m"
+        max-file: "3"
+  admin-api:
+    image: private.docker.registry/admin-api:202006
+    volumes:
+      - ./admin:/app:ro
+    networks:
+      ask-service:
+        ipv4_address: 192.168.34.7
+    logging:
+      driver: json-file
+      options:
+        max-size: "1m"
+        max-file: "3"
+networks:
+  ask-service:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.34.0/27
+
